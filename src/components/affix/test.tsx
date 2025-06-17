@@ -1,24 +1,29 @@
 import 'react-native';
 import React from 'react';
 import { Animated } from 'react-native';
-import renderer from 'react-test-renderer';
+import renderer, { ReactTestRendererJSON } from 'react-test-renderer';
 
-import Affix from '.';
+import Affix from './index';
 
 /* eslint-env jest */
 
-const props = {
+interface AffixProps {
+  color: string;
+  fontSize: number;
+  labelAnimation: Animated.Value;
+}
+
+const props: AffixProps = {
   color: 'black',
   fontSize: 16,
-
   labelAnimation: new Animated.Value(1),
 };
 
-const prefix = 'a';
-const suffix = 'z';
+const prefix: string = 'a';
+const suffix: string = 'z';
 
 it('renders prefix', () => {
-  let affix = renderer
+  let affix: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<Affix type='prefix' {...props}>{prefix}</Affix>)
     .toJSON();
 
@@ -27,7 +32,7 @@ it('renders prefix', () => {
 });
 
 it('renders inactive prefix', () => {
-  let affix = renderer
+  let affix: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(
       <Affix type='prefix' {...props} labelAnimation={new Animated.Value(0)}>
         {prefix}
@@ -40,7 +45,7 @@ it('renders inactive prefix', () => {
 });
 
 it('renders suffix', () => {
-  let affix = renderer
+  let affix: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<Affix type='suffix' {...props}>{suffix}</Affix>)
     .toJSON();
 
@@ -49,7 +54,7 @@ it('renders suffix', () => {
 });
 
 it('renders inactive suffix', () => {
-  let affix = renderer
+  let affix: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(
       <Affix type='suffix' {...props} labelAnimation={new Animated.Value(0)}>
         {suffix}

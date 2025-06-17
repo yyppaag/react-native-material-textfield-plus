@@ -1,17 +1,26 @@
 import { Image } from 'react-native';
 import React from 'react';
-import renderer from 'react-test-renderer';
+import renderer, { ReactTestRendererJSON } from 'react-test-renderer';
 
-import FilledTextField from '.';
+import FilledTextField from './index';
 
-const props = {
+interface TestProps {
+  label: string;
+  value?: string;
+  disabled?: boolean;
+  title?: string;
+  characterRestriction?: number;
+  renderLeftAccessory?: () => JSX.Element;
+}
+
+const props: TestProps = {
   label: 'test',
 };
 
 /* eslint-env jest */
 
 it('renders', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} />)
     .toJSON();
 
@@ -20,7 +29,7 @@ it('renders', () => {
 });
 
 it('renders value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} value='text' />)
     .toJSON();
 
@@ -29,7 +38,7 @@ it('renders value', () => {
 });
 
 it('renders disabled value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} value='text' disabled />)
     .toJSON();
 
@@ -38,7 +47,7 @@ it('renders disabled value', () => {
 });
 
 it('renders title', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} title='field' />)
     .toJSON();
 
@@ -47,7 +56,7 @@ it('renders title', () => {
 });
 
 it('renders counter', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} value='text' characterRestriction={10} />)
     .toJSON();
 
@@ -56,11 +65,11 @@ it('renders counter', () => {
 });
 
 it('renders accessory', () => {
-  let render = () => (
+  let render = (): JSX.Element => (
     <Image />
   );
 
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<FilledTextField {...props} renderLeftAccessory={render} />)
     .toJSON();
 

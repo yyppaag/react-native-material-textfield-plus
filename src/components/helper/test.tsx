@@ -1,25 +1,33 @@
 import 'react-native';
 import React from 'react';
 import { Animated } from 'react-native';
-import renderer from 'react-test-renderer';
+import renderer, { ReactTestRendererJSON } from 'react-test-renderer';
 
-import Helper from '.';
+import Helper from './index';
 
 /* eslint-env jest */
 
-const text = 'helper';
-const props = {
+interface TestProps {
+  title: string;
+  fontSize: number;
+  baseColor: string;
+  errorColor: string;
+  focusAnimation: Animated.Value;
+  disabled?: boolean;
+  error?: string;
+}
+
+const text: string = 'helper';
+const props: TestProps = {
   title: text,
   fontSize: 16,
-
   baseColor: 'black',
   errorColor: 'red',
-
   focusAnimation: new Animated.Value(0),
 };
 
 it('renders helper', () => {
-  let helper = renderer
+  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<Helper {...props} />)
     .toJSON();
 
@@ -28,7 +36,7 @@ it('renders helper', () => {
 });
 
 it('renders disabled helper', () => {
-  let helper = renderer
+  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(
       <Helper {...props} disabled={true} />
     )
@@ -39,7 +47,7 @@ it('renders disabled helper', () => {
 });
 
 it('renders helper with error', () => {
-  let helper = renderer
+  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(
       <Helper {...props} error={text} focusAnimation={new Animated.Value(-1)} />
     )

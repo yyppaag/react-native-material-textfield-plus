@@ -1,17 +1,32 @@
 import { Image } from 'react-native';
 import React from 'react';
-import renderer from 'react-test-renderer';
+import renderer, { ReactTestRendererJSON } from 'react-test-renderer';
 
-import TextField from '.';
+import TextField from './index';
 
-const props = {
+interface TestProps {
+  label: string;
+  value?: string | null;
+  disabled?: boolean;
+  defaultValue?: string;
+  multiline?: boolean;
+  title?: string;
+  error?: string;
+  characterRestriction?: number;
+  prefix?: string;
+  suffix?: string;
+  renderLeftAccessory?: () => JSX.Element;
+  renderRightAccessory?: () => JSX.Element;
+}
+
+const props: TestProps = {
   label: 'test',
 };
 
 /* eslint-env jest */
 
 it('renders', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} />)
     .toJSON();
 
@@ -20,7 +35,7 @@ it('renders', () => {
 });
 
 it('renders null value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value={null} />)
     .toJSON();
 
@@ -29,7 +44,7 @@ it('renders null value', () => {
 });
 
 it('renders value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' />)
     .toJSON();
 
@@ -38,7 +53,7 @@ it('renders value', () => {
 });
 
 it('renders disabled value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' disabled />)
     .toJSON();
 
@@ -47,7 +62,7 @@ it('renders disabled value', () => {
 });
 
 it('renders default value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} defaultValue='text' />)
     .toJSON();
 
@@ -56,7 +71,7 @@ it('renders default value', () => {
 });
 
 it('renders multiline value', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' multiline />)
     .toJSON();
 
@@ -65,7 +80,7 @@ it('renders multiline value', () => {
 });
 
 it('renders title', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} title='field' />)
     .toJSON();
 
@@ -74,7 +89,7 @@ it('renders title', () => {
 });
 
 it('renders error', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} error='message' />)
     .toJSON();
 
@@ -83,7 +98,7 @@ it('renders error', () => {
 });
 
 it('renders counter', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' characterRestriction={10} />)
     .toJSON();
 
@@ -92,7 +107,7 @@ it('renders counter', () => {
 });
 
 it('renders restriction', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' characterRestriction={2} />)
     .toJSON();
 
@@ -101,7 +116,7 @@ it('renders restriction', () => {
 });
 
 it('renders prefix', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' prefix='$' />)
     .toJSON();
 
@@ -110,7 +125,7 @@ it('renders prefix', () => {
 });
 
 it('renders suffix', () => {
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} value='text' suffix='.com' />)
     .toJSON();
 
@@ -123,7 +138,7 @@ it('renders left accessory', () => {
     <Image />
   );
 
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} renderLeftAccessory={render} />)
     .toJSON();
 
@@ -136,7 +151,7 @@ it('renders right accessory', () => {
     <Image />
   );
 
-  let field = renderer
+  let field: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
     .create(<TextField {...props} renderRightAccessory={render} />)
     .toJSON();
 
