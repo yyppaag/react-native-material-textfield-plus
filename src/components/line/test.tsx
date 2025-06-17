@@ -7,7 +7,7 @@ import Line, { LineProps } from './index';
 
 /* eslint-env jest */
 
-const props: LineProps = {
+const baseProps: LineProps = {
   disabled: false,
   restricted: false,
   baseColor: 'black',
@@ -16,41 +16,77 @@ const props: LineProps = {
   lineWidth: 0.5,
   activeLineWidth: 2,
   disabledLineWidth: 1,
-  focusAnimation: new Animated.Value(0),
+  focusAnimation: new Animated.Value(0), // Neutral focus state
 };
 
-it('renders line', () => {
-  let line: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(<Line {...props} />)
-    .toJSON();
+describe('Line', () => {
+  it('renders correctly with default props and neutral focus', () => {
+    const tree = renderer.create(<Line {...baseProps} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-  expect(line)
-    .toMatchSnapshot();
-});
+  it('renders correctly when disabled', () => {
+    const tree = renderer.create(<Line {...baseProps} disabled={true} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-it('renders disabled line', () => {
-  let line: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(<Line {...props} disabled={true} />)
-    .toJSON();
+  it('renders correctly when restricted', () => {
+    const tree = renderer.create(<Line {...baseProps} restricted={true} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-  expect(line)
-    .toMatchSnapshot();
-});
+  it('renders correctly when active (focused)', () => {
+    const tree = renderer.create(<Line {...baseProps} focusAnimation={new Animated.Value(1)} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-it('renders restricted line', () => {
-  let line: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(<Line {...props} restricted={true} />)
-    .toJSON();
+  it('renders correctly when in error state (focused)', () => {
+    const tree = renderer.create(<Line {...baseProps} focusAnimation={new Animated.Value(-1)} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-  expect(line)
-    .toMatchSnapshot();
-});
+  it('renders null when lineType is "none"', () => {
+    const tree = renderer.create(<Line {...baseProps} lineType="none" />).toJSON();
+    expect(tree).toBeNull();
+  });
 
-it('renders active line', () => {
-  let line: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(<Line {...props} focusAnimation={new Animated.Value(1)} />)
-    .toJSON();
+  it('renders null when disabled and disabledLineType is "none"', () => {
+    const tree = renderer.create(<Line {...baseProps} disabled={true} disabledLineType="none" />).toJSON();
+    expect(tree).toBeNull();
+  });
 
-  expect(line)
-    .toMatchSnapshot();
+  it('renders with "dotted" lineType', () => {
+    const tree = renderer.create(<Line {...baseProps} lineType="dotted" />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it('renders with "dashed" lineType when disabled', () => {
+    const tree = renderer.create(<Line {...baseProps} disabled={true} disabledLineType="dashed" />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it('uses specific lineColor when provided', () => {
+    const tree = renderer.create(<Line {...baseProps} lineColor="green" />).toJSON();
+    expect(tree).toMatchSnapshot(); // Color change will be in snapshot
+  });
+
+  it('uses specific lineTintColor when provided and active', () => {
+    const tree = renderer.create(
+      <Line {...baseProps} lineTintColor="purple" focusAnimation={new Animated.Value(1)} />
+    ).toJSON();
+    expect(tree).toMatchSnapshot(); // Color change will be in snapshot
+  });
+
+  it('uses specific disabledLineColor when provided and disabled', () => {
+    const tree = renderer.create(
+      <Line {...baseProps} disabledLineColor="grey" disabled={true} />
+    ).toJSON();
+    expect(tree).toMatchSnapshot(); // Color change will be in snapshot
+  });
+
+  it('applies lineContainer style', () => {
+    const customStyle = { marginTop: 10, marginBottom: 5 };
+    const tree = renderer.create(<Line {...baseProps} lineContainer={customStyle} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 });

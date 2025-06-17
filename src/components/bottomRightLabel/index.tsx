@@ -3,7 +3,7 @@ import { Text, StyleProp, TextStyle, TextProps } from 'react-native';
 
 import styles from './styles';
 
-interface BottomRightLabelProps extends TextProps {
+export interface BottomRightLabelProps extends TextProps { // Added export
   title: string;
   baseColor: string; // This prop seems unused in the current render logic but is in the interface.
   style?: StyleProp<TextStyle>;

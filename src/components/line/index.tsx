@@ -20,8 +20,8 @@ export interface LineProps {
   activeLineWidth: number;
   disabledLineWidth: number;
   focusAnimation: Animated.Value;
-  labelAnimation?: Animated.Value; // Kept as per existing interface
-  contentInset?: { label: number; input: number }; // Kept as per existing interface
+  // labelAnimation?: Animated.Value; // Removed, not used by Line
+  // contentInset?: { label: number; input: number }; // Removed, not used by Line
   lineContainer?: StyleProp<ViewStyle>;
 }
 
@@ -40,8 +40,6 @@ const Line: React.FC<LineProps> = ({
   activeLineWidth,
   disabledLineWidth,
   focusAnimation,
-  // labelAnimation, // Not used in this component's logic
-  // contentInset, // Not used in this component's logic
   lineContainer,
 }) => {
   const maxLineWidth = useMemo(() => {

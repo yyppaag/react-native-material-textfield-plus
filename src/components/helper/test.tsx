@@ -3,56 +3,81 @@ import React from 'react';
 import { Animated } from 'react-native';
 import renderer, { ReactTestRendererJSON } from 'react-test-renderer';
 
-import Helper from './index';
+import Helper, { HelperProps } from './index'; // Import HelperProps
 
 /* eslint-env jest */
 
-interface TestProps {
-  title: string;
-  fontSize: number;
-  baseColor: string;
-  errorColor: string;
-  focusAnimation: Animated.Value;
-  disabled?: boolean;
-  error?: string;
-}
+const helperText: string = 'This is a helper';
+const errorText: string = 'This is an error';
 
-const text: string = 'helper';
-const props: TestProps = {
-  title: text,
-  fontSize: 16,
+const baseProps: HelperProps = {
+  title: helperText,
   baseColor: 'black',
   errorColor: 'red',
-  focusAnimation: new Animated.Value(0),
+  focusAnimation: new Animated.Value(0), // Neutral state
 };
 
-it('renders helper', () => {
-  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(<Helper {...props} />)
-    .toJSON();
+describe('Helper', () => {
+  it('renders correctly with title and neutral focus', () => {
+    const tree = renderer.create(<Helper {...baseProps} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-  expect(helper)
-    .toMatchSnapshot();
-});
+  it('renders correctly when disabled', () => {
+    const tree = renderer.create(<Helper {...baseProps} disabled={true} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-it('renders disabled helper', () => {
-  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(
-      <Helper {...props} disabled={true} />
-    )
-    .toJSON();
+  it('renders correctly with error text when error prop is provided and focus is error state', () => {
+    // Simulate error state via focusAnimation being -1 (as per component logic)
+    // and error prop being set.
+    const tree = renderer.create(
+      <Helper
+        {...baseProps}
+        error={errorText}
+        focusAnimation={new Animated.Value(-1)} // Error focus state
+      />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-  expect(helper)
-    .toMatchSnapshot();
-});
+  it('renders title text when error prop is provided but focus is neutral', () => {
+    // Even if error prop is present, if focusAnimation is not in error state,
+    // the component's internal `errored` state might be false initially or after transition.
+    // The snapshot will show the text based on the `errored` state derived from focusAnimation.
+    const tree = renderer.create(
+      <Helper
+        {...baseProps}
+        error={errorText} // error prop is present
+        focusAnimation={new Animated.Value(0)} // Neutral focus state
+      />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 
-it('renders helper with error', () => {
-  let helper: ReactTestRendererJSON | ReactTestRendererJSON[] | null = renderer
-    .create(
-      <Helper {...props} error={text} focusAnimation={new Animated.Value(-1)} />
-    )
-    .toJSON();
+  it('renders null if no title and no error are provided', () => {
+    const tree = renderer.create(
+      <Helper {...baseProps} title={undefined} error={undefined} />
+    ).toJSON();
+    expect(tree).toBeNull();
+  });
 
-  expect(helper)
-    .toMatchSnapshot();
+  it('applies custom style prop', () => {
+    const customStyle = { fontSize: 18, fontWeight: 'bold' as const };
+    const tree = renderer.create(<Helper {...baseProps} style={customStyle} />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it('renders title when focusAnimation indicates error but no error prop is set', () => {
+    // This tests the scenario where animation might show error color, but text remains title
+    const tree = renderer.create(
+      <Helper
+        {...baseProps}
+        title="Only title"
+        error={undefined} // No error text
+        focusAnimation={new Animated.Value(-1)} // Error focus state for color
+      />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 });

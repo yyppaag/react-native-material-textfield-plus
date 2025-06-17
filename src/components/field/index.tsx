@@ -87,9 +87,14 @@ export interface FieldProps extends TextInputProps {
   lineContainer?: StyleProp<ViewStyle>;
   // Allow 'value' to be explicitly null for clearing or uncontrolled state
   value?: string | null;
+
+  // For FieldOutlined customization
+  onTextLayoutForLabel?: (event: NativeSyntheticEvent<TextLayoutEventData>) => void;
+  LineComponent?: React.FC<any>; // Allow any component that can take LineProps-like props + labelWidth for Outline
 }
 
-const defaultProps: Partial<FieldProps> = {
+// Export for use in example app or other components if needed
+export const defaultProps: Partial<FieldProps> = {
   underlineColorAndroid: 'transparent',
   disableFullscreenUI: true,
   autoCapitalize: 'sentences',
@@ -131,7 +136,17 @@ function startAnimatedTiming(animation: Animated.Value, options: Animated.Timing
   Animated.timing(animation, options).start(callback);
 }
 
-const TextField: React.FC<FieldProps> = (props) => {
+export interface TextFieldMethods {
+  focus: () => void;
+  blur: () => void;
+  clear: () => void;
+  value: () => string | undefined | null;
+  isFocused: () => boolean;
+  isErrored: () => boolean;
+  setValue: (text?: string) => void;
+}
+
+const TextField = React.forwardRef<TextFieldMethods, FieldProps>((props, ref) => {
   const {
     animationDuration = defaultProps.animationDuration,
     fontSize = defaultProps.fontSize,
@@ -187,6 +202,9 @@ const TextField: React.FC<FieldProps> = (props) => {
     style: textInputStyleOverrides,
     height: propsHeight,
     allowFontScaling = true,
+    // Customization props from FieldOutlined/Filled
+    onTextLayoutForLabel,
+    LineComponent = Line, // Default to Line component
     ...restInputProps
   } = { ...defaultProps, ...props };
 
@@ -210,13 +228,11 @@ const TextField: React.FC<FieldProps> = (props) => {
     return !!(currentPlaceholder || text || (!hasReceivedFocus && currentDefaultValue));
   }, []);
 
-
   const errorStateVal = determineErrorState(props);
   const currentLabelStateVal = determineLabelState(props, currentText, isComponentFocused, receivedFocus);
 
   const focusState = useCallback(() => errorStateVal ? -1 : (isComponentFocused ? 1 : 0), [errorStateVal, isComponentFocused]);
   const calculatedLabelState = useCallback(() => currentLabelStateVal || isComponentFocused ? 1 : 0, [currentLabelStateVal, isComponentFocused]);
-
 
   const onFocusAnimationEnd = useCallback(() => {
     if (mountedRef.current && !propsError && currentError) {
@@ -253,33 +269,28 @@ const TextField: React.FC<FieldProps> = (props) => {
 
   useEffect(() => {
     startFocusAnimation();
-  }, [errorStateVal, startFocusAnimation]); // errorStateVal instead of errorState
+  }, [errorStateVal, startFocusAnimation]);
 
   useEffect(() => {
-    if (propsValue !== undefined && propsValue !== currentText ) { // Only update if propsValue is defined
-        setCurrentText(propsValue);
+    if (propsValue !== undefined && propsValue !== currentText) {
+      setCurrentText(propsValue);
     }
-  }, [propsValue]); // currentText removed from deps to avoid loop with onChangeText
-
+  }, [propsValue]);
 
   useEffect(() => {
     startLabelAnimation();
-  }, [currentLabelStateVal, isComponentFocused, startLabelAnimation]); // currentLabelStateVal instead of currentLabelState
-
+  }, [currentLabelStateVal, isComponentFocused, startLabelAnimation]);
 
   const handleFocus = useCallback((event: NativeSyntheticEvent<TextInputFocusEventData>) => {
     if (propsOnFocus) {
       propsOnFocus(event);
     }
     if (clearTextOnFocus && inputRef.current) {
-      // Calling .clear() on TextInput already triggers onChangeText with an empty string in most cases
       inputRef.current.clear();
     }
     setIsComponentFocused(true);
     if (!receivedFocus) {
       setReceivedFocus(true);
-      // If defaultValue was shown, and component receives focus, currentText should be set to defaultValue
-      // to allow editing, unless clearTextOnFocus is true.
       if (defaultValue && !clearTextOnFocus && currentText == null) {
         setCurrentText(defaultValue);
       }
@@ -315,7 +326,7 @@ const TextField: React.FC<FieldProps> = (props) => {
     }
   }, [disabled, editable]);
 
-  const isFieldErrored = useCallback(() => errorStateVal, [errorStateVal]);
+  const isFieldErroredInternal = useCallback(() => errorStateVal, [errorStateVal]);
 
   const isDefaultVisible = useCallback(() => {
     return !receivedFocus && currentText == null && defaultValue != null;
@@ -323,8 +334,25 @@ const TextField: React.FC<FieldProps> = (props) => {
 
   const valueToDisplay = isDefaultVisible() ? defaultValue : currentText;
 
+  useImperativeHandle(ref, () => ({
+    focus: () => { inputRef.current?.focus(); },
+    blur: () => { inputRef.current?.blur(); },
+    clear: () => {
+      setCurrentText(undefined); // Clear internal state
+      inputRef.current?.clear();
+      if (propsOnChangeText) propsOnChangeText(''); // Notify parent
+    },
+    value: () => valueToDisplay,
+    isFocused: () => isComponentFocused || (inputRef.current?.isFocused() || false),
+    isErrored: () => isFieldErroredInternal(),
+    setValue: (text?: string) => { // Allow undefined to clear, or empty string
+      setCurrentText(text);
+      // Note: This does not call propsOnChangeText, matching original class behavior for direct setValue
+    },
+  }));
+
   const dynamicInputHeight = useMemo(() => {
-    if (propsHeight !== undefined) return propsHeight; // explicit height prop takes precedence
+    if (propsHeight !== undefined) return propsHeight;
     return multiline ? inputHeightState : fontSize! * 1.5;
   }, [propsHeight, multiline, inputHeightState, fontSize]);
 
@@ -449,31 +477,50 @@ const TextField: React.FC<FieldProps> = (props) => {
       labelAnimation,
       labelColor,
       allowFontScaling,
+      onTextLayout: onTextLayoutForLabel, // Pass the custom onTextLayout
     };
     return <Label {...labelProps} />;
   };
 
   const renderLineElement = () => {
-    const lineProps: LineProps = {
+    const lineComponentProps: LineProps = { // Base props for Line/Outline
       disabled: disabled!,
       restricted: isRestricted(),
-      lineType: lineType!,
-      disabledLineType: disabledLineType!,
+      lineType: lineType!, // Outline might not use this directly but Line does
+      disabledLineType: disabledLineType!, // Outline might not use this
       lineWidth: lineWidth!,
       activeLineWidth: activeLineWidth!,
       disabledLineWidth: disabledLineWidth!,
       tintColor: tintColor!,
       baseColor: baseColor!,
       errorColor: errorColor!,
-      lineColor, // Pass specific line colors if provided
+      lineColor,
       lineTintColor,
       disabledLineColor,
       focusAnimation,
-      labelAnimation, // Pass labelAnimation if needed by Line's logic (e.g., for outline variant)
-      contentInset, // Pass contentInset if needed
+      labelAnimation,
+      contentInset,
       lineContainer,
+      // labelWidth is specific to Outline, LineComponent will receive it if it's Outline
+      // This relies on OutlineProps being compatible enough or LineComponent handling extra props.
+      // If LineComponent is Outline, it expects labelWidth.
+      // We need to ensure this prop is available if LineComponent is Outline.
+      // This might require adding labelWidth to LineProps or a more specific type for LineComponent.
+      // For now, we'll assume FieldOutlined passes it via {...props} and LineComponent (Outline) picks it up.
+      // However, the current FieldProps does not include labelWidth.
+      // This indicates that FieldOutlined's way of passing labelWidth by spreading it into TextField
+      // might not be correctly typed if LineComponent is to be generic.
+      // Let's assume for now that specific props for Outline are passed through restProps if not explicitly handled.
     };
-    return <Line {...lineProps} />;
+     // The `labelWidth` prop for Outline is a special case.
+    // If `LineComponent` is `Outline`, it will need `labelWidth`.
+    // `FieldOutlined` passes all its props to `TextField`.
+    // If `labelWidth` is among `restInputProps` (which it wouldn't be based on `FieldProps` definition)
+    // or if `LineComponent` is passed already configured with its `labelWidth` (which is not the case here).
+    // The `Outline` component from `FieldOutlined` needs `labelWidth`.
+    // The `renderCustomLine` in `FieldOutlined` already has access to its own `labelWidth`.
+    // So, when `FieldOutlined` provides `LineComponent`, it's a function that already incorporates `labelWidth`.
+    return <LineComponent {...lineComponentProps} />;
   };
 
 

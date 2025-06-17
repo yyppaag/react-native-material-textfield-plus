@@ -28,17 +28,11 @@ const outlinedDefaultProps: Partial<FieldProps> = {
 const FieldOutlined: React.FC<FieldProps> = (props) => {
   const labelWidth = useRef(new Animated.Value(0)).current;
 
-  const {
-    fontSize = defaultProps.fontSize, // fontSize from TextField's default if not in props
-    labelFontSize = defaultProps.labelFontSize, // labelFontSize from TextField's default if not in props
-    ...restProps
-  } = props;
-
+  // Directly use props for onTextLayout, TextField's defaults will apply if these are undefined
   const onTextLayout = useCallback((event: NativeSyntheticEvent<TextLayoutEventData>) => {
     const { lines } = event.nativeEvent;
-    // Ensure fontSize and labelFontSize are available, falling back to TextField's defaults if necessary
-    const currentFontSize = props.fontSize || defaultProps.fontSize;
-    const currentLabelFontSize = props.labelFontSize || defaultProps.labelFontSize;
+    const currentFontSize = props.fontSize || defaultProps.fontSize; // from Field's defaultProps
+    const currentLabelFontSize = props.labelFontSize || defaultProps.labelFontSize; // from Field's defaultProps
 
     if (currentFontSize && currentLabelFontSize && lines.length > 0) {
       const scale = currentLabelFontSize / currentFontSize;
@@ -48,30 +42,23 @@ const FieldOutlined: React.FC<FieldProps> = (props) => {
 
   // Props that will be passed to the underlying TextField component
   const textFieldProps: FieldProps = {
-    ...outlinedDefaultProps, // Apply OutlinedTextField's default props
-    ...restProps, // Spread the incoming props
-    contentInset: outlinedContentInset,
-    labelOffset: outlinedLabelOffset,
-    // Pass onTextLayout to be used by TextField's Label component
-    // TextField needs to be adapted to pass this to its Label's props
+    ...outlinedDefaultProps, // Apply OutlinedTextField's own default props first
+    ...props, // Then spread all incoming props (including fontSize, labelFontSize if provided)
+    contentInset: outlinedContentInset, // Override contentInset
+    labelOffset: outlinedLabelOffset,   // Override labelOffset
     onTextLayoutForLabel: onTextLayout,
-    // Pass the Outline component to be used for rendering the line
-    // TextField needs to be adapted to accept and use this component
     LineComponent: (lineProps) => (
       <Outline
-        {...lineProps} // Props passed by TextField to its line component
+        {...lineProps}
         labelWidth={labelWidth}
-        // Ensure Outline receives all necessary props.
-        // These should align with what LineProps expects and what TextField provides.
+        // Pass necessary props from FieldOutlined's props to Outline if not covered by lineProps
+        // For example, if Outline needs specific props not in LineProps, they must be passed here.
+        // However, `lineProps` should ideally contain all that Outline needs if it's a valid LineProps substitute.
       />
     ),
   };
 
   return <TextField {...textFieldProps} />;
 };
-
-// Re-attach defaultProps from TextField if they are not overridden,
-// or merge them. For simplicity, TextField handles its own defaults.
-// FieldOutlined specific defaults are handled in outlinedDefaultProps.
 
 export default FieldOutlined;

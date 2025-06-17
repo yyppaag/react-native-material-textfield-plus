@@ -7,10 +7,14 @@ import {
   Platform,
 } from 'react-native';
 import { RaisedTextButton } from 'react-native-material-buttons';
-import { TextField } from 'react-native-material-textfield';
+// Updated import to local TextField and its defaultProps
+import TextField, { defaultProps as textFieldDefaultProps } from '../src/components/field';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 
-let styles = {
+// Define styles with StyleSheet for better type checking and potential optimizations
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
   scroll: {
     backgroundColor: 'transparent',
   },
@@ -34,22 +38,50 @@ let styles = {
     flex: 1,
     backgroundColor: '#E8EAF6',
   },
-};
+});
 
-let defaults = {
+interface ExampleState {
+  firstname: string;
+  lastname: string;
+  about: string;
+  email?: string; // Optional as it can be empty initially
+  password?: string; // Optional
+  secureTextEntry: boolean;
+  errors?: { [key: string]: string };
+  house?: string; // From disabled field
+}
+
+// Define types for refs for better type safety
+interface FieldRef {
+  focus: () => void;
+  blur: () => void;
+  value: () => string;
+  isFocused: () => boolean;
+  // Add other methods if used, e.g., clear, setValue, isErrored
+}
+
+const defaults = {
   firstname: 'Eddard',
   lastname: 'Stark',
   about: 'Stoic, dutiful, and honorable man, considered to embody the values of the North',
 };
 
 export default function init() {
-  class Example extends Component {
-    constructor(props) {
+  class Example extends Component<{}, ExampleState> {
+    // Explicitly type refs
+    firstname: FieldRef | null = null;
+    lastname: FieldRef | null = null;
+    about: FieldRef | null = null;
+    email: FieldRef | null = null;
+    password: FieldRef | null = null;
+    house: FieldRef | null = null;
+
+    constructor(props: {}) {
       super(props);
 
       this.onFocus = this.onFocus.bind(this);
       this.onSubmit = this.onSubmit.bind(this);
-      this.onChangeText = this.onChangeText.bind(this);
+      this.onChangeText = this.onChangeText.bind(this); // This will need adjustment for individual fields
       this.onSubmitFirstName = this.onSubmitFirstName.bind(this);
       this.onSubmitLastName = this.onSubmitLastName.bind(this);
       this.onSubmitAbout = this.onSubmitAbout.bind(this);
@@ -69,31 +101,33 @@ export default function init() {
       this.state = {
         secureTextEntry: true,
         ...defaults,
+        errors: {}, // Ensure errors is initialized
       };
     }
 
     onFocus() {
       let { errors = {} } = this.state;
+      const newErrors = { ...errors };
 
-      for (let name in errors) {
-        let ref = this[name];
-
+      for (const name in newErrors) {
+        const ref = this[name as keyof Example] as FieldRef | null;
         if (ref && ref.isFocused()) {
-          delete errors[name];
+          delete newErrors[name as keyof ExampleState['errors']];
         }
       }
 
-      this.setState({ errors });
+      if (Object.keys(newErrors).length < Object.keys(errors).length) {
+        this.setState({ errors: newErrors });
+      }
     }
 
-    onChangeText(text) {
-      ['firstname', 'lastname', 'about', 'email', 'password']
-        .map((name) => ({ name, ref: this[name] }))
-        .forEach(({ name, ref }) => {
-          if (ref.isFocused()) {
-            this.setState({ [name]: text });
-          }
-        });
+    // onChangeText needs to be field-specific for functional components
+    // The previous shared onChangeText relied on knowing which field was focused.
+    // Now, each TextField will have its own onChangeText handler.
+    handleTextChange(fieldName: keyof ExampleState) {
+      return (text: string) => {
+        this.setState({ [fieldName]: text } as unknown as Pick<ExampleState, keyof ExampleState>);
+      };
     }
 
     onAccessoryPress() {
@@ -101,60 +135,57 @@ export default function init() {
     }
 
     onSubmitFirstName() {
-      this.lastname.focus();
+      this.lastname?.focus();
     }
 
     onSubmitLastName() {
-      this.about.focus();
+      this.about?.focus();
     }
 
     onSubmitAbout() {
-      this.email.focus();
+      this.email?.focus();
     }
 
     onSubmitEmail() {
-      this.password.focus();
+      this.password?.focus();
     }
 
     onSubmitPassword() {
-      this.password.blur();
+      this.password?.blur();
     }
 
     onSubmit() {
-      let errors = {};
+      const errors: { [key: string]: string } = {};
+      const fieldsToValidate: (keyof ExampleState)[] = ['firstname', 'lastname', 'email', 'password'];
 
-      ['firstname', 'lastname', 'email', 'password']
-        .forEach((name) => {
-          let value = this[name].value();
-
+      fieldsToValidate.forEach((name) => {
+        const fieldRef = this[name as keyof Example] as FieldRef | null;
+        if (fieldRef) {
+          const value = fieldRef.value();
           if (!value) {
             errors[name] = 'Should not be empty';
-          } else {
-            if ('password' === name && value.length < 6) {
-              errors[name] = 'Too short';
-            }
+          } else if (name === 'password' && value.length < 6) {
+            errors[name] = 'Too short';
           }
-        });
+        }
+      });
 
       this.setState({ errors });
     }
 
-    updateRef(name, ref) {
+    updateRef(name: keyof Example, ref: FieldRef | null) {
       this[name] = ref;
     }
 
     renderPasswordAccessory() {
-      let { secureTextEntry } = this.state;
-
-      let name = secureTextEntry?
-        'visibility':
-        'visibility-off';
+      const { secureTextEntry } = this.state;
+      const name = secureTextEntry ? 'visibility' : 'visibility-off';
 
       return (
         <MaterialIcon
           size={24}
           name={name}
-          color={TextField.defaultProps.baseColor}
+          color={textFieldDefaultProps.baseColor} // Use imported defaultProps
           onPress={this.onAccessoryPress}
           suppressHighlighting={true}
         />
@@ -162,10 +193,10 @@ export default function init() {
     }
 
     render() {
-      let { errors = {}, secureTextEntry, ...data } = this.state;
-      let { firstname, lastname } = data;
+      const { errors = {}, secureTextEntry, ...data } = this.state;
+      const { firstname = '', lastname = '' } = data; // Ensure defaults for defaultEmail
 
-      let defaultEmail = `${firstname || 'name'}@${lastname || 'house'}.com`
+      const defaultEmail = `${firstname || 'name'}@${lastname || 'house'}.com`
         .replace(/\s+/g, '_')
         .toLowerCase();
 
